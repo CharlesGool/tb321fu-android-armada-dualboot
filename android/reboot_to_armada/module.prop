@@ -1,0 +1,6 @@
+id=reboot_to_armada
+name=Reboot to Armada / 重启到 Armada
+version=1.0
+versionCode=1
+author=tb321fu-android-armada-dualboot
+description=TB321FU dual boot: switch to slot B (Armada) and reboot. / 切换到 B 槽（Armada）并重启。
