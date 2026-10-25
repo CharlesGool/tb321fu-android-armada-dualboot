@@ -147,6 +147,10 @@ After a reboot, use the module's **Action** button, or open its WebUI and add it
 
 Fallback from anywhere: `fastboot set_active a` (Android) / `fastboot set_active b` (Armada).
 
+## Kubuntu instead of Armada
+
+Slot B can run GUF296's Kubuntu 26.04 instead. On BOE panels its own kernel shows a black screen, so it boots with Armada's kernel and needs a few extra files. See [kubuntu/README.md](kubuntu/README.md).
+
 ## Keep in mind
 
 - **Updating Android by flashing a ROM zip in recovery** writes to the *other* slot, so it overwrites `boot_b`. Afterwards run `fastboot flash boot_b boot.img` again. `armada_esp` and `armada_root` are never touched by ROMs.
@@ -164,7 +168,7 @@ Fallback from anywhere: `fastboot set_active a` (Android) / `fastboot set_active
 ## Credits
 
 - [enij90/armada-tb321fu](https://github.com/enij90/armada-tb321fu): the Armada port this guide builds on.
-- GUF296: the original Linux port, UEFI loader and GRUB template for this tablet.
+- GUF296: the original Linux port, UEFI loader and GRUB template for this tablet, and the [Kubuntu build](https://github.com/GUF296/ubuntu-y700-build-ci).
 - [Armada](https://github.com/armada-os/armada), [ROCKNIX](https://github.com/ROCKNIX), [linux-msm/qbootctl](https://github.com/linux-msm/qbootctl).
 
 ## License

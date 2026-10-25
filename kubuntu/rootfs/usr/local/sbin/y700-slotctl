@@ -1,0 +1,94 @@
+#!/usr/bin/python3
+"""Slot helper for the Android (slot A) + Kubuntu (slot B) dual boot on TB321FU.
+
+Only the GPT attribute bits of the boot_b entry are touched. Slot switching
+(which also swaps partition type GUIDs) is left to the bootloader:
+
+  mark-success   set boot_b "successful" so ABL keeps booting slot B
+  to-android     clear boot_b success and retry count; ABL then falls back to
+                 slot A on the next boot and performs the real switch itself
+  status         print boot_b attributes
+"""
+import os, struct, sys, zlib
+
+PART = '/dev/disk/by-partlabel/boot_b'
+SUCCESS = 1 << 54
+RETRY_MASK = 0b111 << 51
+
+
+def locate():
+    if os.environ.get('Y700_SLOTCTL_TEST'):  # "image:partnum:sectorsize", offline testing only
+        p, n, s = os.environ['Y700_SLOTCTL_TEST'].rsplit(':', 2)
+        return p, int(n), int(s)
+    dev = os.path.basename(os.path.realpath(PART))
+    sysdir = os.path.realpath(f'/sys/class/block/{dev}')
+    disk = os.path.basename(os.path.dirname(sysdir))
+    num = int(open(f'{sysdir}/partition').read())
+    ss = int(open(f'/sys/block/{disk}/queue/logical_block_size').read())
+    return f'/dev/{disk}', num, ss
+
+
+def crc(b):
+    return zlib.crc32(b) & 0xffffffff
+
+
+def load(f, lba, ss):
+    f.seek(lba * ss)
+    hdr = bytearray(f.read(ss))
+    if hdr[:8] != b'EFI PART':
+        raise SystemExit(f'no GPT header at LBA {lba}')
+    hsize = struct.unpack_from('<I', hdr, 12)[0]
+    ent_lba, n, esz = struct.unpack_from('<QII', hdr, 72)
+    f.seek(ent_lba * ss)
+    ents = bytearray(f.read(n * esz))
+    check = bytearray(hdr[:hsize]); struct.pack_into('<I', check, 16, 0)
+    if struct.unpack_from('<I', hdr, 16)[0] != crc(check) or struct.unpack_from('<I', hdr, 88)[0] != crc(ents):
+        raise SystemExit(f'GPT CRC mismatch at LBA {lba}, refusing to write')
+    return hdr, hsize, ent_lba, esz, ents
+
+
+def store(f, lba, ss, hdr, hsize, ent_lba, ents):
+    struct.pack_into('<I', hdr, 88, crc(ents))
+    struct.pack_into('<I', hdr, 16, 0)
+    struct.pack_into('<I', hdr, 16, crc(bytes(hdr[:hsize])))
+    f.seek(ent_lba * ss); f.write(ents)
+    f.seek(lba * ss); f.write(hdr)
+
+
+def main():
+    cmd = sys.argv[1] if len(sys.argv) > 1 else 'status'
+    disk, num, ss = locate()
+    with open(disk, 'r+b') as f:
+        hdr, hsize, ent_lba, esz, ents = load(f, 1, ss)
+        alt = struct.unpack_from('<Q', hdr, 32)[0]
+        off = (num - 1) * esz
+        name = ents[off + 56:off + 128].decode('utf-16le').rstrip('\0')
+        if name != 'boot_b':
+            raise SystemExit(f'entry {num} on {disk} is {name!r}, not boot_b')
+        attr = struct.unpack_from('<Q', ents, off + 48)[0]
+        if cmd == 'status':
+            a = attr >> 48
+            print(f'{disk} #{num} boot_b attr=0x{a:04x} active={(a >> 2) & 1} '
+                  f'retry={(a >> 3) & 7} success={(a >> 6) & 1} unbootable={(a >> 7) & 1}')
+            return
+        if cmd == 'mark-success':
+            new = attr | SUCCESS
+        elif cmd == 'to-android':
+            new = attr & ~SUCCESS & ~RETRY_MASK
+        else:
+            raise SystemExit(__doc__)
+        if new == attr:
+            print('no change'); return
+        bhdr, bhsize, bent_lba, besz, bents = load(f, alt, ss)
+        if bents[off:off + 128] != ents[off:off + 128]:
+            raise SystemExit('primary and backup boot_b entries differ, refusing to write')
+        struct.pack_into('<Q', ents, off + 48, new)
+        struct.pack_into('<Q', bents, off + 48, new)
+        store(f, alt, ss, bhdr, bhsize, bent_lba, bents)
+        store(f, 1, ss, hdr, hsize, ent_lba, ents)
+        f.flush(); os.fsync(f.fileno())
+    print(f'boot_b attr 0x{attr >> 48:04x} -> 0x{new >> 48:04x}')
+
+
+if __name__ == '__main__':
+    main()

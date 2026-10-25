@@ -147,6 +147,10 @@ adb shell su -c "/data/adb/ksud module install /data/local/tmp/reboot_to_armada.
 
 任何情况下都能用 fastboot 兜底：`fastboot set_active a`（Android）或 `fastboot set_active b`（Armada）。
 
+## 用 Kubuntu 代替 Armada
+
+B 槽也可以改装 GUF296 的 Kubuntu 26.04。在 BOE 屏上它自带的内核会黑屏，所以要用 Armada 的内核启动，并补几个文件。详见 [kubuntu/README.zh-CN.md](kubuntu/README.zh-CN.md)。
+
 ## 注意事项
 
 - **用 recovery 卡刷 Android ROM** 时，A/B 机型会写入"另一个槽"，`boot_b` 会被覆盖。刷完后重新执行 `fastboot flash boot_b boot.img`。ROM 不会动 `armada_esp` 和 `armada_root`。
@@ -164,7 +168,7 @@ adb shell su -c "/data/adb/ksud module install /data/local/tmp/reboot_to_armada.
 ## 致谢
 
 - [enij90/armada-tb321fu](https://github.com/enij90/armada-tb321fu)：本教程基于的 Armada 移植。
-- GUF296：这台平板最早的 Linux 移植，以及 UEFI 加载器和 GRUB 模板。
+- GUF296：这台平板最早的 Linux 移植，以及 UEFI 加载器、GRUB 模板和 [Kubuntu 构建](https://github.com/GUF296/ubuntu-y700-build-ci)。
 - [Armada](https://github.com/armada-os/armada)、[ROCKNIX](https://github.com/ROCKNIX)、[linux-msm/qbootctl](https://github.com/linux-msm/qbootctl)。
 
 ## 许可证
