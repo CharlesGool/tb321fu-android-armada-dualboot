@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Reboot to Android
+Name[zh_CN]=重启到 Android
+Exec=/usr/local/bin/y700-reboot-to-android
+Icon=system-reboot
+Terminal=false
+Categories=System;

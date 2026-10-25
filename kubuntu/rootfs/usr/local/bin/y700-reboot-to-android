@@ -1,0 +1,6 @@
+#!/bin/sh
+# Hand the next boot back to Android (slot A); the bootloader does the actual slot switch.
+set -e
+sudo -n /usr/local/sbin/y700-slotctl to-android
+sync
+systemctl reboot
