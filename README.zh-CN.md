@@ -135,7 +135,7 @@ sudo ./armada/install-reboot-to-android.sh
 
 `qbootctl` 会像 Android 的启动控制 HAL 一样，同时切换 UFS 启动 LUN（xbl_a / xbl_b）。不要只用 `sgdisk` 改 GPT 的属性位。
 
-**Android → Armada**：一个 KernelSU / SukiSU 模块，调用 Android 自带的 `bootctl`（高通启动控制 HAL）。把文件夹内容打包成 zip 后安装：
+**Android → Armada**：一个 KernelSU / SukiSU 模块，通过高通启动控制 HAL 切槽——先用 Android 自带的 `bootctl`，GSI 的 `bootctl` 只认 HIDL 时退回直接调用 AIDL HAL（`service call android.hardware.boot.IBootControl/default`）。把文件夹内容打包成 zip 后安装：
 
 ```sh
 cd android/reboot_to_armada && zip -r ../reboot_to_armada.zip . && cd ..

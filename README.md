@@ -135,7 +135,7 @@ sudo ./armada/install-reboot-to-android.sh
 
 `qbootctl` also switches the UFS boot LUN (xbl_a/xbl_b), as Android's boot HAL does. Do not flip only the GPT attribute bits with `sgdisk`.
 
-**Android → Armada:** a KernelSU/SukiSU module that calls Android's own `bootctl` (Qualcomm boot HAL). Zip the folder contents and install it:
+**Android → Armada:** a KernelSU/SukiSU module that switches the slot through the Qualcomm boot control HAL — via Android's own `bootctl`, falling back to calling the AIDL HAL directly (`service call android.hardware.boot.IBootControl/default`) when the GSI's `bootctl` only speaks HIDL. Zip the folder contents and install it:
 
 ```sh
 cd android/reboot_to_armada && zip -r ../reboot_to_armada.zip . && cd ..
